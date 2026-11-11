@@ -55,7 +55,12 @@ Bibliography opened for this work: RFC 3713 (sections 2.2 to 2.4 and Appendix A)
 
 `BenchmarkEncrypt` and `BenchmarkDecrypt` loop the block over a 4 KiB buffer, the shape of one XTS sector, with a 256-bit key and no allocation. The reference is Botan 3.14.1 (`botan speed --buf-size=4096 Camellia-256`, wrapped as Go benchmarks by `internal/botanbench` so that `abbench` can interleave it). Apple M4 Max (arm64), one core (`GOMAXPROCS=1`), 6 interleaved rounds by `abbench --max-load 8`, compared with `benchstat`; every result file holds `^Benchmark` lines.
 
-BENCHTABLE
+| 4 KiB, per call | this package | Botan, ARMv8 AES (default) | Botan, scalar (`--clear-cpuid=armv8aes`) |
+|---|---|---|---|
+| Encrypt | 23.96 µs ± 4 % (163 MiB/s) | 26.82 µs ± 2 % (146 MiB/s), this package **1.12x faster** | 25.49 µs ± 4 %, this package 1.06x faster |
+| Decrypt | 24.03 µs ± 10 % (163 MiB/s) | 26.95 µs ± 17 % (145 MiB/s), this package **1.12x faster** | 25.34 µs ± 5 %, this package 1.06x faster |
+
+Times are per 4 KiB call, so lower is better. The package is at or ahead of the reference in every column, with 0 allocations; the spreads of the Botan columns overlap the gaps in the last two cells, so read the scalar column as "level", not as a precise ratio. The two Botan columns were measured in separate `abbench` runs (1 round discarded for load in the first). `internal/botanbench` reports Botan's rate as ns/op, and `benchstat` does not join benchmarks of two different packages, so the ratios above are computed from the two result files' medians.
 
 Reproduce: `go test -c -o camellia.test .`, `go test -c -o botan.test ./internal/botanbench`, then `abbench --base ./camellia.test --head ./botan.test --max-load 8 -n 6 -- -test.bench . -test.run '^$'` (add `--head-arg=-botan.clear-cpuid=armv8aes` for the scalar column).
 
