@@ -35,6 +35,10 @@ The contract is that of `cipher.Block`: in-place operation is allowed and short 
 
 Camellia is big-endian by specification: the key and the block are read as big-endian 64-bit words (the 24-byte key's `KR` is the last 8 bytes followed by their complement, as in RFC 3713 section 2.2). The ciphertext is therefore the same on every architecture; CI checks it on big-endian s390x.
 
+## Not constant-time
+
+The F-function is eight look-ups in a shared 16 KiB table of 64-bit words (`sp [8][256]uint64`), indexed by bytes that depend on the key and the cipher state. Those look-ups use secret-dependent addresses, so **table lookups are not constant-time**: the cipher is exposed to cache-timing attacks by a local attacker, such as another process or VM on the same host. The key schedule is not constant-time either. Do not use it where that matters.
+
 ## Verification
 
 - RFC 3713 Appendix A: the three example vectors (128-, 192- and 256-bit keys), encrypted and decrypted.
