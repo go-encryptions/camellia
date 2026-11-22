@@ -8,6 +8,10 @@
 //
 // The implementation is plain Go: the F-function is eight 64-bit table
 // look-ups, the tables being derived at start-up from SBOX1 of RFC 3713.
+// Those look-ups index memory with addresses that depend on the key and the
+// cipher state, so this package is NOT constant-time, in Encrypt, Decrypt and
+// in the key schedule (which also runs the F-function): it is exposed to
+// cache-timing attacks by a local attacker.
 package camellia
 
 import (
